@@ -1,0 +1,18 @@
+# Conforme PSA "restricted" : bloqué par Kyverno (require-resource-limits) et par la ResourceQuota.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: evil-nolimits
+  namespace: secure-app
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 101
+    seccompProfile: { type: RuntimeDefault }
+  containers:
+    - name: app
+      image: nginxinc/nginx-unprivileged:1.27-alpine
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities: { drop: ["ALL"] }

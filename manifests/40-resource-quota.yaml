@@ -1,0 +1,16 @@
+# Empêche un pod compromis ou mal configuré d'épuiser les ressources du cluster (DoS interne).
+# Pas de LimitRange "par défaut" volontairement : elle injecterait des limites et masquerait
+# les manifestes incomplets. Chaque conteneur doit déclarer ses limites (vérifié par Kyverno).
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: secure-app-quota
+  namespace: secure-app
+spec:
+  hard:
+    requests.cpu: "1"
+    requests.memory: 512Mi
+    limits.cpu: "2"
+    limits.memory: 1Gi
+    pods: "10"
+    services.loadbalancers: "0"

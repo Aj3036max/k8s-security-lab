@@ -1,0 +1,33 @@
+# Moindre privilège : l'application a son propre ServiceAccount, sans aucun droit sur l'API,
+# et son token n'est pas monté automatiquement dans les pods.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: web
+  namespace: secure-app
+automountServiceAccountToken: false
+---
+# Compte "lecture seule" pour un développeur / l'équipe support : peut voir, pas modifier, pas lire les secrets.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: read-only
+  namespace: secure-app
+rules:
+  - apiGroups: ["", "apps"]
+    resources: ["pods", "pods/log", "services", "deployments", "replicasets", "configmaps"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: support-read-only
+  namespace: secure-app
+subjects:
+  - kind: Group
+    name: support-team
+    apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: read-only
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,20 @@
+# Conforme PSA "restricted" : seul Kyverno peut le bloquer (tag latest)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: evil-latest
+  namespace: secure-app
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 101
+    seccompProfile: { type: RuntimeDefault }
+  containers:
+    - name: app
+      image: nginxinc/nginx-unprivileged:latest
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities: { drop: ["ALL"] }
+      resources:
+        limits: { cpu: 100m, memory: 64Mi }

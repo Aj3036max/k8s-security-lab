@@ -1,0 +1,27 @@
+# Politique d'audit : trace qui fait quoi sur l'API Kubernetes (forensic / détection).
+apiVersion: audit.k8s.io/v1
+kind: Policy
+omitStages:
+  - RequestReceived
+rules:
+  # Accès aux secrets : métadonnées seulement (ne jamais logger le contenu des secrets !)
+  - level: Metadata
+    resources:
+      - group: ""
+        resources: ["secrets", "configmaps"]
+  # exec / attach / port-forward dans un pod : action sensible
+  - level: RequestResponse
+    resources:
+      - group: ""
+        resources: ["pods/exec", "pods/attach", "pods/portforward"]
+  # Modifications RBAC
+  - level: RequestResponse
+    resources:
+      - group: "rbac.authorization.k8s.io"
+  # Ignorer le bruit : health checks et lectures des composants système
+  - level: None
+    users: ["system:kube-proxy"]
+  - level: None
+    nonResourceURLs: ["/healthz*", "/livez*", "/readyz*", "/version"]
+  # Tout le reste : métadonnées
+  - level: Metadata

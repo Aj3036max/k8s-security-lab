@@ -1,0 +1,116 @@
+# Policy as Code avec Kyverno : règles d'admission qui complètent Pod Security Admission.
+# failureAction "Enforce" : les ressources non conformes sont REFUSÉES par l'API server.
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: disallow-latest-tag
+  annotations:
+    policies.kyverno.io/title: Interdire le tag "latest"
+    policies.kyverno.io/description: >-
+      Le tag latest est mutable : on ne sait pas quelle version tourne, et une image
+      compromise peut être poussée sous ce tag. Imposer une version explicite.
+spec:
+  background: true
+  rules:
+    - name: require-image-tag
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+              namespaces: ["secure-app"]
+      validate:
+        failureAction: Enforce
+        message: "Les images doivent avoir un tag explicite."
+        pattern:
+          spec:
+            containers:
+              - image: "*:*"
+    - name: forbid-latest-tag
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+              namespaces: ["secure-app"]
+      validate:
+        failureAction: Enforce
+        message: "Le tag 'latest' est interdit."
+        pattern:
+          spec:
+            containers:
+              - image: "!*:latest"
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-resource-limits
+  annotations:
+    policies.kyverno.io/title: Limites CPU / mémoire obligatoires
+spec:
+  background: true
+  rules:
+    - name: check-limits
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+              namespaces: ["secure-app"]
+      validate:
+        failureAction: Enforce
+        message: "Chaque conteneur doit définir resources.limits.cpu et resources.limits.memory."
+        pattern:
+          spec:
+            containers:
+              - resources:
+                  limits:
+                    cpu: "?*"
+                    memory: "?*"
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-image-registries
+  annotations:
+    policies.kyverno.io/title: Registres d'images autorisés
+    policies.kyverno.io/description: Limite la supply chain aux registres de confiance.
+spec:
+  background: true
+  rules:
+    - name: allowed-registries
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+              namespaces: ["secure-app"]
+      validate:
+        failureAction: Enforce
+        message: "Image refusée : registres autorisés = docker.io/nginxinc, ghcr.io/aj3036max, registry.k8s.io."
+        pattern:
+          spec:
+            containers:
+              - image: "nginxinc/* | docker.io/nginxinc/* | ghcr.io/aj3036max/* | registry.k8s.io/*"
+---
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-readonly-rootfs
+  annotations:
+    policies.kyverno.io/title: Système de fichiers racine en lecture seule
+    policies.kyverno.io/description: >-
+      Empêche un attaquant d'écrire des binaires ou de modifier la configuration dans le conteneur.
+spec:
+  background: true
+  rules:
+    - name: readonly-rootfs
+      match:
+        any:
+          - resources:
+              kinds: ["Pod"]
+              namespaces: ["secure-app"]
+      validate:
+        failureAction: Enforce
+        message: "securityContext.readOnlyRootFilesystem doit être true."
+        pattern:
+          spec:
+            containers:
+              - securityContext:
+                  readOnlyRootFilesystem: true

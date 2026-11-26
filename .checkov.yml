@@ -1,0 +1,8 @@
+# Exceptions Checkov justifiées pour le lab Kubernetes
+skip-check:
+  # Image épinglée par digest : on garde un tag lisible pour un lab pédagogique (Kyverno interdit déjà "latest").
+  - CKV_K8S_43
+  # imagePullPolicy Always : IfNotPresent est volontaire pour fonctionner hors-ligne avec kind.
+  - CKV_K8S_15
+  # UID >= 10000 : l'image officielle nginx-unprivileged utilise l'UID 101 (non-root, vérifié par PSA restricted).
+  - CKV_K8S_40

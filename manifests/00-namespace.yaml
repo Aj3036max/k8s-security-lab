@@ -1,0 +1,11 @@
+# Pod Security Admission : le namespace refuse tout pod qui ne respecte pas le profil "restricted"
+# (pas de root, pas de privilège, pas de hostPath, capabilities supprimées, seccomp obligatoire...).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: secure-app
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted

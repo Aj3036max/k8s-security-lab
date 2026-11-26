@@ -1,0 +1,53 @@
+name: Kubernetes security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    name: Validation statique
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: kubeconform (schémas Kubernetes)
+        run: |
+          curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.8.0/kubeconform-linux-amd64.tar.gz | tar xz
+          ./kubeconform -strict -summary -ignore-missing-schemas manifests/ attacks/
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Checkov (Kubernetes best practices)
+        run: |
+          pip install checkov
+          checkov -d manifests --framework kubernetes --compact --quiet --config-file .checkov.yml
+
+  e2e:
+    name: Tests d'attaque sur un vrai cluster (kind)
+    needs: static
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Installer kind
+        run: |
+          curl -sSLo kind https://kind.sigs.k8s.io/dl/v0.33.0/kind-linux-amd64
+          chmod +x kind && sudo mv kind /usr/local/bin/
+      - name: Créer le cluster + Kyverno + application
+        env:
+          KIND_CONFIG: cluster/kind-ci.yaml
+        run: ./scripts/setup.sh
+      - name: Lancer les attaques
+        run: ./scripts/test-attacks.sh
+      - name: Debug en cas d'échec
+        if: failure()
+        run: |
+          kubectl get pods -A
+          kubectl -n secure-app describe deploy web
+          kubectl get events -A --sort-by=.lastTimestamp | tail -30

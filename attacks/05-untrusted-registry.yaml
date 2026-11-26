@@ -1,0 +1,20 @@
+# Conforme PSA "restricted" : seul Kyverno peut le bloquer (registre non autorisé)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: evil-registry
+  namespace: secure-app
+spec:
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    seccompProfile: { type: RuntimeDefault }
+  containers:
+    - name: app
+      image: quay.io/some-unknown-user/cryptominer:1.0
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities: { drop: ["ALL"] }
+      resources:
+        limits: { cpu: 100m, memory: 64Mi }
