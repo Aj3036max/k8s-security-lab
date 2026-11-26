@@ -14,14 +14,14 @@ jobs:
     name: Validation statique
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: kubeconform (schémas Kubernetes)
         run: |
           curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.8.0/kubeconform-linux-amd64.tar.gz | tar xz
           ./kubeconform -strict -summary -ignore-missing-schemas manifests/ attacks/
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - name: Checkov (Kubernetes best practices)
@@ -34,7 +34,7 @@ jobs:
     needs: static
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Installer kind
         run: |
           curl -sSLo kind https://kind.sigs.k8s.io/dl/v0.33.0/kind-linux-amd64
