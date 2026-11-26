@@ -13,7 +13,7 @@ La CI crée un vrai cluster à chaque push et rejoue les attaques automatiquemen
 | Couche | Mesure | Fichier |
 |---|---|---|
 | Admission | **Pod Security Admission** `restricted` sur le namespace | `manifests/00-namespace.yaml` |
-| Admission | **Kyverno** : pas de `:latest`, registres autorisés, limites obligatoires, rootfs read-only | `policies/kyverno-policies.yaml` |
+| Admission | **Kyverno** (ValidatingPolicy en CEL) : pas de `:latest`, registres autorisés, limites obligatoires, rootfs read-only | `policies/kyverno-policies.yaml` |
 | Identité | ServiceAccount dédié sans droits, token non monté, Role lecture seule (sans secrets) | `manifests/10-rbac.yaml` |
 | Workload | non-root, `readOnlyRootFilesystem`, `drop: ALL`, seccomp `RuntimeDefault`, pas d'escalade | `manifests/20-deployment.yaml` |
 | Réseau | **NetworkPolicies** zero-trust : default deny ingress + egress, DNS et HTTP seulement | `manifests/30-networkpolicies.yaml` |
@@ -64,7 +64,7 @@ Toutes les attaques ont été bloquées.
 ## 📚 Ce que j'ai appris
 
 - Pod Security Standards (privileged / baseline / restricted) et Pod Security Admission
-- Policy as Code avec Kyverno
+- Policy as Code avec Kyverno (ValidatingPolicy en CEL, migration depuis les anciennes ClusterPolicy)
 - RBAC en moindre privilège, NetworkPolicies et nécessité d'un CNI compatible (Calico)
 - Les vecteurs d'évasion de conteneur et comment les bloquer
 - Référentiels : CIS Kubernetes Benchmark, NSA/CISA Kubernetes Hardening Guide

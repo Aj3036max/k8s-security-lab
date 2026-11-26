@@ -29,7 +29,7 @@ for i in $(seq 1 30); do
   [[ $i -eq 30 ]] && { echo "Échec de l'application des politiques Kyverno"; exit 1; }
   echo "   webhook Kyverno pas encore prêt, nouvel essai ($i/30)..."; sleep 5
 done
-kubectl wait --for=condition=Ready clusterpolicy --all --timeout=120s
+sleep 10  # laisse Kyverno enregistrer les nouvelles politiques dans son webhook
 kubectl apply -f manifests/
 kubectl -n secure-app rollout status deploy/web --timeout=180s
 
