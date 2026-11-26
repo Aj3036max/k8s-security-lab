@@ -48,6 +48,8 @@ jobs:
       - name: Debug en cas d'échec
         if: failure()
         run: |
+          echo "--- Erreur d'application des politiques Kyverno ---"
+          kubectl apply -f policies/ 2>&1 | tail -20 || true
           kubectl get pods -A
           kubectl -n secure-app describe deploy web
           kubectl get events -A --sort-by=.lastTimestamp | tail -30
